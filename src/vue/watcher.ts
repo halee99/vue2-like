@@ -44,7 +44,6 @@ class Watcher {
     vm._watchers.push(this)
     if (options) {
       this.deep = !!options.deep
-      this.lazy = !options.immediate
     }
 
     this.cb = cb
@@ -56,6 +55,12 @@ class Watcher {
       this.getter = parsePath(expOrFn)
     }
     this.value = this.lazy ? undefined : this.get()
+
+    if (options && options.immediate) {
+      log('watcher immediate')
+      this.value = undefined
+      this.update()
+    }
   }
 
   get () {

@@ -1,27 +1,19 @@
-import {Watcher} from "./watcher"
 import { Component } from "./vue"
 import { throwError, log, replaceAll } from "./utils"
-import { Dep } from "./dep"
 
 const templateCompile = (vm: Component) => {
-  const dom = nodesCompile(vm, vm.$el)
-  // vm.$el.appendChild(dom)
+  nodesCompile(vm, vm.$el)
 }
 
 const nodesCompile = (vm: Component, rootNode) => {
-  let frag = document.createDocumentFragment()
-
   let arr = rootNode.childNodes
   for (let i = 0; i < arr.length; i++) {
     let child = arr[i]
-    let compiledNode = nodeCompile(vm, child)
-    // frag.appendChild(compiledNode)
+    nodeCompile(vm, child)
   }
-
-  return frag
 }
 
-const nodeCompile = (vm: Component, node: Element | HTMLElement): DocumentFragment | Element => {
+const nodeCompile = (vm: Component, node: Element | HTMLElement) => {
   // 节点类型为元素
   if (node.nodeType === Node.ELEMENT_NODE) {
     return handerElementNode(vm, node)
@@ -35,7 +27,7 @@ const nodeCompile = (vm: Component, node: Element | HTMLElement): DocumentFragme
   throwError('todo node.nodeType', node.nodeType)
 }
 
-const handerElementNode = (vm: Component, node: Element | HTMLElement): DocumentFragment | Element => {
+const handerElementNode = (vm: Component, node: Element | HTMLElement) => {
   var attr = node.attributes
   // 解析属性
   for (let i = 0; i < attr.length; i++) {
@@ -45,8 +37,12 @@ const handerElementNode = (vm: Component, node: Element | HTMLElement): Document
       if (vm.hasOwnProperty(key)) {
         node.addEventListener('input', function (e) {
           vm[key] = (<HTMLInputElement> e.target).value
-        });
-        (<HTMLInputElement> node).value = vm[key]
+        })
+
+        vm.$watch(key, function(value) {
+          log('immediate', value)
+          ;(<HTMLInputElement> node).value = value
+        }, {immediate: true})
       } else {
         throwError('could not find', key)
       }
@@ -98,10 +94,8 @@ const handerTextNode = (vm: Component, node: Element): DocumentFragment | Elemen
       textMap[key] = vm[key]
       vm.$watch(key, function (value) {
         textMap[key] = value
-        
         setNodeValue()
-      }, {immediate: true})
-      // vm.addWatcher(watcher)
+      })
     } else {
       throwError('could not find', key)
     }
